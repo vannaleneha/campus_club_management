@@ -1,0 +1,814 @@
+/* ==========================================================================
+   Campus Club Management System - Master Application Stylesheet
+   Theme: Ice Blue + Purple Glassmorphism
+   Palette:
+     Main background: #EAF4FF
+     Primary blue:    #4F8CFF
+     Primary purple:  #7C5CFC
+     Deep purple:     #5B3FC4
+     Main text:       #18243D
+     Secondary text:  #667085
+     White:           #FFFFFF
+     Glass bg:        rgba(255, 255, 255, 0.65)
+     Glass border:    rgba(255, 255, 255, 0.85)
+   ========================================================================== */
+
+.root-pane {
+    -fx-font-family: 'Segoe UI', System, Helvetica, Arial, sans-serif;
+    -fx-background-color: linear-gradient(to bottom right, #EAF4FF, #D9EAFF, #EBF3FF);
+}
+
+/* --------------------------------------------------------------------------
+   Top Navbar
+   -------------------------------------------------------------------------- */
+.navbar {
+    -fx-background-color: rgba(255, 255, 255, 0.55);
+    -fx-border-color: rgba(124, 92, 252, 0.15);
+    -fx-border-width: 0 0 1 0;
+}
+
+.navbar-brand {
+    -fx-text-fill: #18243D;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.navbar-badge {
+    -fx-background-color: rgba(79, 140, 255, 0.12);
+    -fx-text-fill: #4F8CFF;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 14 6 14;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(79, 140, 255, 0.3);
+    -fx-border-radius: 20;
+}
+
+/* --------------------------------------------------------------------------
+   Landing Hero Section
+   -------------------------------------------------------------------------- */
+.hero-container {
+    -fx-background-color: transparent;
+}
+
+.portal-tag {
+    -fx-background-color: rgba(124, 92, 252, 0.12);
+    -fx-text-fill: #7C5CFC;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.5;
+    -fx-padding: 6 16 6 16;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(124, 92, 252, 0.3);
+    -fx-border-radius: 20;
+}
+
+.app-title {
+    -fx-fill: linear-gradient(to right, #18243D, #5B3FC4);
+    -fx-font-size: 38px;
+    -fx-font-weight: bold;
+}
+
+.tagline {
+    -fx-fill: #7C5CFC;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.description {
+    -fx-text-fill: #667085;
+    -fx-font-size: 14px;
+    -fx-text-alignment: center;
+    -fx-line-spacing: 4;
+}
+
+/* --------------------------------------------------------------------------
+   "Get Started" Button
+   -------------------------------------------------------------------------- */
+.get-started-button {
+    -fx-background-color: linear-gradient(to right, #4F8CFF, #7C5CFC);
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 14 36 14 36;
+    -fx-background-radius: 30;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.35), 16, 0, 0, 6);
+}
+
+.get-started-button:hover {
+    -fx-background-color: linear-gradient(to right, #3B7BF0, #6B4BF0);
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.5), 20, 0, 0, 8);
+}
+
+.get-started-button:pressed {
+    -fx-background-color: #5B3FC4;
+    -fx-effect: dropshadow(three-pass-box, rgba(91, 63, 196, 0.4), 8, 0, 0, 2);
+}
+
+/* --------------------------------------------------------------------------
+   Feature Cards
+   -------------------------------------------------------------------------- */
+.feature-card {
+    -fx-background-color: rgba(255, 255, 255, 0.65);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255, 255, 255, 0.85);
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.12), 15, 0, 0, 4);
+}
+
+.feature-card:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.85);
+    -fx-border-color: rgba(124, 92, 252, 0.4);
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.2), 18, 0, 0, 6);
+}
+
+.card-title {
+    -fx-text-fill: #18243D;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.card-desc {
+    -fx-text-fill: #667085;
+    -fx-font-size: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   Landing Footer
+   -------------------------------------------------------------------------- */
+.footer {
+    -fx-background-color: rgba(255, 255, 255, 0.55);
+    -fx-border-color: rgba(124, 92, 252, 0.15);
+    -fx-border-width: 1 0 0 0;
+}
+
+.footer-text {
+    -fx-text-fill: #667085;
+    -fx-font-size: 11px;
+}
+
+/* ==========================================================================
+   LOGIN PAGE STYLES (Light Glassmorphism Theme)
+   ========================================================================== */
+
+.login-root-container {
+    -fx-font-family: 'Segoe UI', System, Helvetica, Arial, sans-serif;
+    -fx-background-color: linear-gradient(to bottom right, #EAF4FF, #D9EAFF, #EBF3FF);
+}
+
+/* Back Button */
+.back-button {
+    -fx-background-color: rgba(255, 255, 255, 0.65);
+    -fx-text-fill: #18243D;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 18 8 18;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(124, 92, 252, 0.3);
+    -fx-border-radius: 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.1), 8, 0, 0, 2);
+}
+
+.back-button:hover {
+    -fx-background-color: rgba(79, 140, 255, 0.15);
+    -fx-text-fill: #4F8CFF;
+    -fx-border-color: #4F8CFF;
+}
+
+/* Dual-Panel Login Card */
+.login-card {
+    -fx-background-color: rgba(255, 255, 255, 0.65);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.9);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.18), 25, 0, 0, 10);
+}
+
+/* Left Hero Side of Card */
+.login-card-left {
+    -fx-background-color: linear-gradient(to bottom right, #5B3FC4, #7C5CFC, #4F8CFF);
+    -fx-background-radius: 20 0 0 20;
+}
+
+.login-card-logo {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.login-card-title {
+    -fx-fill: #FFFFFF;
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.login-card-tagline {
+    -fx-fill: #EAF4FF;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.login-card-supporting-text {
+    -fx-text-fill: #EAF4FF;
+    -fx-font-size: 13px;
+    -fx-line-spacing: 2;
+}
+
+.login-bullet-label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 12px;
+}
+
+/* Right Form Side of Card */
+.login-card-right {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
+    -fx-background-radius: 0 20 20 0;
+}
+
+.login-heading {
+    -fx-text-fill: #18243D;
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.login-subheading {
+    -fx-text-fill: #667085;
+    -fx-font-size: 13px;
+}
+
+.form-label {
+    -fx-text-fill: #18243D;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.form-input {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #18243D;
+    -fx-prompt-text-fill: #667085;
+    -fx-border-color: rgba(124, 92, 252, 0.25);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10 14 10 14;
+    -fx-font-size: 13px;
+}
+
+.form-input:focused {
+    -fx-border-color: #4F8CFF;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.25), 8, 0, 0, 0);
+}
+
+.eye-toggle-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #667085;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-padding: 4 8 4 8;
+    -fx-border-color: transparent;
+}
+
+.eye-toggle-button:hover {
+    -fx-text-fill: #4F8CFF;
+}
+
+.form-combo {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(124, 92, 252, 0.25);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 13px;
+}
+
+.form-combo .cell {
+    -fx-text-fill: #18243D;
+    -fx-background-color: transparent;
+}
+
+.form-combo .combo-box-popup .list-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(124, 92, 252, 0.25);
+}
+
+.form-combo .combo-box-popup .list-cell {
+    -fx-text-fill: #18243D;
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 8 12 8 12;
+}
+
+.form-combo .combo-box-popup .list-cell:hover {
+    -fx-background-color: #4F8CFF;
+    -fx-text-fill: #FFFFFF;
+}
+
+.form-combo:focused {
+    -fx-border-color: #4F8CFF;
+}
+
+.forgot-password-link {
+    -fx-text-fill: #4F8CFF;
+    -fx-font-size: 12px;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.forgot-password-link:hover {
+    -fx-text-fill: #7C5CFC;
+    -fx-underline: true;
+}
+
+.login-submit-button {
+    -fx-background-color: linear-gradient(to right, #4F8CFF, #7C5CFC);
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 24 12 24;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.35), 10, 0, 0, 4);
+}
+
+.login-submit-button:hover {
+    -fx-background-color: linear-gradient(to right, #3B7BF0, #6B4BF0);
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.5), 14, 0, 0, 6);
+}
+
+.login-submit-button:pressed {
+    -fx-background-color: #5B3FC4;
+}
+
+/* ==========================================================================
+   STUDENT DASHBOARD STYLES
+   ========================================================================== */
+
+.dashboard-root-container {
+    -fx-font-family: 'Segoe UI', System, Helvetica, Arial, sans-serif;
+    -fx-background-color: linear-gradient(to bottom right, #EAF4FF, #D9EAFF, #EBF3FF);
+}
+
+.form-card {
+    -fx-background-color: rgba(255, 255, 255, 0.65);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.85);
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.12), 15, 0, 0, 6);
+}
+
+.form-header {
+    -fx-text-fill: #18243D;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar Styles
+   -------------------------------------------------------------------------- */
+.sidebar-pane {
+    -fx-background-color: #181C2E;
+    -fx-pref-width: 250px;
+    -fx-min-width: 240px;
+    -fx-border-color: rgba(255, 255, 255, 0.06);
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar-brand-box {
+    -fx-padding: 24 20 20 20;
+}
+
+.sidebar-brand {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.sidebar-nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #A0AEC0;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-padding: 12 20 12 20;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+}
+
+.sidebar-nav-item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-text-fill: #FFFFFF;
+}
+
+.sidebar-nav-item-active {
+    -fx-background-color: linear-gradient(to right, #4F8CFF, #7C5CFC);
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-background-radius: 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.45), 12, 0, 0, 4);
+}
+
+.sidebar-user-box {
+    -fx-background-color: #131625;
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 14;
+    -fx-padding: 16;
+}
+
+.sidebar-user-name {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.sidebar-user-role {
+    -fx-text-fill: #718096;
+    -fx-font-size: 12px;
+}
+
+.sidebar-action-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #A0AEC0;
+    -fx-font-size: 13px;
+    -fx-padding: 6 8 6 8;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+}
+
+.sidebar-action-btn:hover {
+    -fx-text-fill: #4F8CFF;
+    -fx-underline: true;
+}
+
+.sidebar-logout-btn {
+    -fx-background-color: rgba(229, 62, 62, 0.15);
+    -fx-text-fill: #FEB2B2;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 16 10 16;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(229, 62, 62, 0.35);
+    -fx-border-radius: 20;
+    -fx-alignment: CENTER;
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+}
+
+.sidebar-logout-btn:hover {
+    -fx-background-color: #E53E3E;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Statistic Cards
+   -------------------------------------------------------------------------- */
+.stat-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(124, 92, 252, 0.15);
+    -fx-border-radius: 14;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.1), 12, 0, 0, 4);
+}
+
+.stat-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.2), 16, 0, 0, 6);
+    -fx-border-color: rgba(124, 92, 252, 0.4);
+}
+
+.stat-card-title {
+    -fx-text-fill: #667085;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+.stat-card-value {
+    -fx-text-fill: #18243D;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.stat-card-subtitle {
+    -fx-text-fill: #4F8CFF;
+    -fx-font-size: 11px;
+    -fx-font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   Section Cards (My Clubs & Upcoming Events)
+   -------------------------------------------------------------------------- */
+.dashboard-section-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(124, 92, 252, 0.12);
+    -fx-border-radius: 16;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.08), 12, 0, 0, 4);
+}
+
+.dashboard-section-title {
+    -fx-text-fill: #18243D;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.club-item-card {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 10;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 10;
+    -fx-padding: 14 18 14 18;
+}
+
+.club-item-card:hover {
+    -fx-background-color: #EDF2F7;
+    -fx-border-color: #CBD5E0;
+}
+
+.status-badge-active {
+    -fx-background-color: rgba(72, 187, 120, 0.15);
+    -fx-text-fill: #2F855A;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(72, 187, 120, 0.4);
+    -fx-border-radius: 12;
+}
+
+.event-item-card {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 12;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12;
+    -fx-padding: 16 20 16 20;
+}
+
+.event-item-card:hover {
+    -fx-border-color: rgba(79, 140, 255, 0.4);
+    -fx-background-color: #FFFFFF;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.1), 10, 0, 0, 2);
+}
+
+.register-btn {
+    -fx-background-color: linear-gradient(to right, #4F8CFF, #7C5CFC);
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 18 8 18;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+}
+
+.register-btn:hover {
+    -fx-background-color: linear-gradient(to right, #3B7BF0, #6B4BF0);
+}
+
+.registered-badge {
+    -fx-background-color: rgba(72, 187, 120, 0.15);
+    -fx-text-fill: #2F855A;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 18 8 18;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(72, 187, 120, 0.4);
+    -fx-border-radius: 20;
+}
+
+/* Modal Dialog Styles */
+.dialog-pane {
+    -fx-background-color: #FFFFFF;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+/* --------------------------------------------------------------------------
+   Flyout ContextMenu Styling for Nested Sidebar Dropdown
+   -------------------------------------------------------------------------- */
+.context-menu {
+    -fx-background-color: #181C2E;
+    -fx-border-color: rgba(255, 255, 255, 0.12);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 6;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.4), 14, 0, 0, 4);
+}
+
+.menu-item {
+    -fx-background-color: transparent;
+    -fx-padding: 8 16 8 16;
+}
+
+.menu-item .label {
+    -fx-text-fill: #A0AEC0;
+    -fx-font-size: 13px;
+}
+
+.menu-item:hover, .menu-item:focused {
+    -fx-background-color: linear-gradient(to right, #4F8CFF, #7C5CFC);
+    -fx-background-radius: 6;
+}
+
+.menu-item:hover .label, .menu-item:focused .label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+}
+
+.menu {
+    -fx-background-color: transparent;
+    -fx-padding: 8 16 8 16;
+}
+
+.menu .label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.menu:hover, .menu:showing {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-radius: 6;
+}
+
+.menu > .right-arrow {
+    -fx-background-color: #A0AEC0;
+}
+
+.menu:hover > .right-arrow, .menu:showing > .right-arrow {
+    -fx-background-color: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar Accordion Submenu Styles
+   -------------------------------------------------------------------------- */
+.sidebar-subnav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #A0AEC0;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-padding: 8 16 8 36;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+}
+
+.sidebar-subnav-item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-text-fill: #FFFFFF;
+}
+
+.sidebar-subnav-item-active {
+    -fx-background-color: rgba(79, 140, 255, 0.2);
+    -fx-text-fill: #4F8CFF;
+    -fx-font-weight: bold;
+    -fx-border-color: #4F8CFF;
+    -fx-border-width: 0 0 0 3;
+    -fx-background-radius: 4 20 20 4;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Club Cards & Filter Pill Styles
+   -------------------------------------------------------------------------- */
+.club-grid-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(124, 92, 252, 0.12);
+    -fx-border-radius: 16;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.08), 12, 0, 0, 4);
+    -fx-pref-width: 340px;
+    -fx-min-width: 300px;
+}
+
+.club-grid-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.2), 16, 0, 0, 6);
+    -fx-border-color: rgba(124, 92, 252, 0.4);
+}
+
+.club-badge-tech {
+    -fx-background-color: #EBF8FF;
+    -fx-text-fill: #2B6CB0;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 12;
+    -fx-border-color: #BEE3F8;
+    -fx-border-radius: 12;
+}
+
+.club-badge-nontech {
+    -fx-background-color: #FFF5F5;
+    -fx-text-fill: #C53030;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 12;
+    -fx-border-color: #FED7D7;
+    -fx-border-radius: 12;
+}
+
+.view-details-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: #4F8CFF;
+    -fx-text-fill: #4F8CFF;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-cursor: hand;
+}
+
+.view-details-btn:hover {
+    -fx-background-color: #4F8CFF;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Compact Vertical Wireframe Club Cards & Top Control Bar
+   -------------------------------------------------------------------------- */
+.compact-club-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(124, 92, 252, 0.12);
+    -fx-border-radius: 16;
+    -fx-padding: 24 20 24 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 140, 255, 0.08), 12, 0, 0, 4);
+    -fx-pref-width: 250px;
+    -fx-min-width: 230px;
+    -fx-max-width: 270px;
+    -fx-alignment: TOP_CENTER;
+}
+
+.compact-club-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 92, 252, 0.22), 16, 0, 0, 6);
+    -fx-border-color: rgba(124, 92, 252, 0.4);
+}
+
+.club-avatar-box {
+    -fx-background-color: linear-gradient(to bottom right, #EBF4FF, #D0E2FF);
+    -fx-background-radius: 20;
+    -fx-padding: 12 16 12 16;
+    -fx-alignment: CENTER;
+}
+
+.compact-card-title {
+    -fx-text-fill: #18243D;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+}
+
+.compact-card-subtitle {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 12px;
+    -fx-alignment: CENTER;
+    -fx-wrap-text: true;
+}
+
+.compact-card-members {
+    -fx-text-fill: #94A3B8;
+    -fx-font-size: 11px;
+    -fx-alignment: CENTER;
+}
+
+.join-pill-btn {
+    -fx-background-color: linear-gradient(to right, #4F8CFF, #7C5CFC);
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 24 10 24;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+    -fx-alignment: CENTER;
+}
+
+.join-pill-btn:hover {
+    -fx-background-color: linear-gradient(to right, #3B7BF0, #6B4BF0);
+}
+
+.filter-btn-outline {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #4A5568;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 10 16 10 16;
+    -fx-cursor: hand;
+}
+
+.filter-btn-outline:hover {
+    -fx-border-color: #4F8CFF;
+    -fx-text-fill: #4F8CFF;
+    -fx-background-color: #F8FAFC;
+}
+
