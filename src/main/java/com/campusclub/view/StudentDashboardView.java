@@ -1,15 +1,13 @@
 package com.campusclub.view;
 
-import com.campusclub.dao.ClubDAO;
-import com.campusclub.dao.EventDAO;
-import com.campusclub.dao.UserDAO;
+import com.campusclub.controller.StudentDashboardController;
 import com.campusclub.model.Club;
 import com.campusclub.model.Event;
 import com.campusclub.model.User;
+import com.campusclub.service.ChatbotService;
 import com.campusclub.util.AlertUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -32,10 +30,8 @@ public class StudentDashboardView extends BorderPane {
 
     private final User studentUser;
     private final Runnable onLogout;
-
-    private final ClubDAO clubDAO;
-    private final EventDAO eventDAO;
-    private final UserDAO userDAO;
+    private final StudentDashboardController controller;
+    private final ChatbotService chatbotService;
 
     private VBox mainContentArea;
     private ScrollPane mainScrollPane;
@@ -50,11 +46,18 @@ public class StudentDashboardView extends BorderPane {
     private Button activeNavButton;
 
     public StudentDashboardView(User studentUser, Runnable onLogout) {
+        this(studentUser, onLogout, new StudentDashboardController());
+    }
+
+    public StudentDashboardView(User studentUser, Runnable onLogout, StudentDashboardController controller) {
+        this(studentUser, onLogout, controller, new ChatbotService(controller.getClubDAO(), controller.getEventDAO()));
+    }
+
+    public StudentDashboardView(User studentUser, Runnable onLogout, StudentDashboardController controller, ChatbotService chatbotService) {
         this.studentUser = studentUser;
         this.onLogout = onLogout;
-        this.clubDAO = new ClubDAO();
-        this.eventDAO = new EventDAO();
-        this.userDAO = new UserDAO();
+        this.controller = controller;
+        this.chatbotService = chatbotService != null ? chatbotService : new ChatbotService(controller.getClubDAO(), controller.getEventDAO());
 
         initializeUI();
     }
@@ -103,8 +106,8 @@ public class StudentDashboardView extends BorderPane {
 
         Button dashBtn = createNavButton("📊 Dashboard", () -> loadDashboardView());
 
-        // Clubs Navigation Item without triangle symbol
-        Button clubsBtn = createNavButton("🎭 Clubs", () -> loadClubsFiltered("Technical", null));
+        // Clubs Navigation Item
+        Button clubsBtn = createNavButton("🎭 Clubs", () -> loadClubsFiltered(null, null));
 
         VBox clubsSubmenuBox = new VBox(4);
         clubsSubmenuBox.setPadding(new Insets(4, 0, 4, 10));
@@ -118,7 +121,7 @@ public class StudentDashboardView extends BorderPane {
 
         VBox clubsNavGroup = new VBox(0, clubsBtn, clubsSubmenuBox);
 
-        // Hover Action: Hovering on Clubs reveals Technical and Non-Technical instantly without clicking
+        // Hover Action: Hovering on Clubs reveals Technical and Non-Technical options
         clubsNavGroup.setOnMouseEntered(e -> {
             clubsSubmenuBox.setVisible(true);
             clubsSubmenuBox.setManaged(true);
@@ -218,50 +221,6 @@ public class StudentDashboardView extends BorderPane {
         }
     }
 
-    /**
-     * Creates a dark flyout ContextMenu for "Clubs" with 2 categories (Technical, Non-Technical)
-     * and nested flyout club sub-items.
-     */
-    private ContextMenu createClubsFlyoutMenu(Button clubsBtn) {
-        ContextMenu contextMenu = new ContextMenu();
-        contextMenu.getStyleClass().add("context-menu");
-
-        // Level 1 Category: Technical
-        Menu techMenu = new Menu("💻 Technical");
-        techMenu.getStyleClass().add("menu");
-
-        // Level 2 Sub-items: Technical Clubs
-        MenuItem scrsItem = new MenuItem("⚙️ SCRS");
-        scrsItem.setOnAction(e -> {
-            setActiveNav(clubsBtn);
-            loadClubsFiltered("Technical", "SCRS");
-        });
-
-        MenuItem smcItem = new MenuItem("🤖 IEEE SMC");
-        smcItem.setOnAction(e -> {
-            setActiveNav(clubsBtn);
-            loadClubsFiltered("Technical", "IEEE SMC");
-        });
-
-        techMenu.getItems().addAll(scrsItem, smcItem);
-
-        // Level 1 Category: Non-Technical
-        Menu nonTechMenu = new Menu("🎨 Non-Technical");
-        nonTechMenu.getStyleClass().add("menu");
-
-        // Level 2 Sub-items: Non-Technical Clubs
-        MenuItem vishakaItem = new MenuItem("🌸 Vishaka");
-        vishakaItem.setOnAction(e -> {
-            setActiveNav(clubsBtn);
-            loadClubsFiltered("Non-Technical", "Vishaka");
-        });
-
-        nonTechMenu.getItems().addAll(vishakaItem);
-
-        contextMenu.getItems().addAll(techMenu, nonTechMenu);
-        return contextMenu;
-    }
-
     // =========================================================================
     // MAIN DASHBOARD VIEW
     // =========================================================================
@@ -311,10 +270,10 @@ public class StudentDashboardView extends BorderPane {
         double participationRate = 0.0;
 
         try {
-            myClubsCount = clubDAO.getJoinedClubsCount(userId);
-            upcomingEventsCount = eventDAO.getUpcomingEventsCount();
-            eventsAttendedCount = eventDAO.getEventsAttendedCount(userId);
-            participationRate = eventDAO.getParticipationRate(userId);
+            myClubsCount = controller.getJoinedClubsCount(userId);
+            upcomingEventsCount = controller.getUpcomingEventsCount();
+            eventsAttendedCount = controller.getEventsAttendedCount(userId);
+            participationRate = controller.getParticipationRate(userId);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -359,16 +318,16 @@ public class StudentDashboardView extends BorderPane {
     }
 
     /**
-     * Refreshes the 4 statistic card values from MySQL database.
+     * Refreshes the 4 statistic card values from MySQL database via Controller.
      */
     private void refreshStatCards() {
         if (studentUser == null) return;
         int userId = studentUser.getUserId();
         try {
-            int myClubsCount = clubDAO.getJoinedClubsCount(userId);
-            int upcomingEventsCount = eventDAO.getUpcomingEventsCount();
-            int eventsAttendedCount = eventDAO.getEventsAttendedCount(userId);
-            double participationRate = eventDAO.getParticipationRate(userId);
+            int myClubsCount = controller.getJoinedClubsCount(userId);
+            int upcomingEventsCount = controller.getUpcomingEventsCount();
+            int eventsAttendedCount = controller.getEventsAttendedCount(userId);
+            double participationRate = controller.getParticipationRate(userId);
 
             if (myClubsValLabel != null) myClubsValLabel.setText(String.valueOf(myClubsCount));
             if (upcomingEventsValLabel != null) upcomingEventsValLabel.setText(String.valueOf(upcomingEventsCount));
@@ -394,7 +353,7 @@ public class StudentDashboardView extends BorderPane {
         int userId = studentUser != null ? studentUser.getUserId() : 0;
 
         try {
-            List<Club> joinedClubs = clubDAO.getClubsForUser(userId);
+            List<Club> joinedClubs = controller.getClubsForUser(userId);
             if (joinedClubs.isEmpty()) {
                 Label emptyLabel = new Label("No clubs joined yet");
                 emptyLabel.getStyleClass().add("card-desc");
@@ -421,11 +380,11 @@ public class StudentDashboardView extends BorderPane {
         row.getStyleClass().add("club-item-card");
         row.setAlignment(Pos.CENTER_LEFT);
 
-        String icon = club.getIcon() != null ? club.getIcon() : "🎭";
+        String icon = resolveClubFallbackEmoji(club);
         Label nameLbl = new Label(icon + "  " + club.getName());
         nameLbl.getStyleClass().add("card-title");
 
-        Label catLbl = new Label(" • " + club.getCategory());
+        Label catLbl = new Label(" • " + (club.getCategory() != null ? club.getCategory() : "General"));
         catLbl.getStyleClass().add("card-desc");
 
         HBox leftBox = new HBox(6, nameLbl, catLbl);
@@ -455,7 +414,7 @@ public class StudentDashboardView extends BorderPane {
         int userId = studentUser != null ? studentUser.getUserId() : 0;
 
         try {
-            List<Event> upcomingEvents = eventDAO.getUpcomingEventsForUser(userId);
+            List<Event> upcomingEvents = controller.getUpcomingEventsForUser(userId);
             if (upcomingEvents.isEmpty()) {
                 Label emptyLabel = new Label("No upcoming events");
                 emptyLabel.getStyleClass().add("card-desc");
@@ -517,7 +476,7 @@ public class StudentDashboardView extends BorderPane {
         int userId = studentUser.getUserId();
 
         try {
-            boolean success = eventDAO.registerForEvent(userId, event.getEventId());
+            boolean success = controller.registerForEvent(userId, event.getEventId());
             if (success) {
                 event.setRegistered(true);
                 AlertUtils.showInfo(
@@ -551,222 +510,12 @@ public class StudentDashboardView extends BorderPane {
         }
     }
 
-    // =========================================================================
-    // CHANGE PASSWORD MODAL DIALOG
-    // =========================================================================
-
     /**
-     * Opens the Change Password Modal containing:
-     * Current Password, New Password, Confirm New Password, Show/Hide password toggle, Change Password button, Cancel button.
+     * Opens the consolidated Change Password modal dialog.
      */
     private void openChangePasswordDialog() {
-        if (studentUser == null) return;
-
-        Stage dialogStage = new Stage();
-        dialogStage.initModality(Modality.APPLICATION_MODAL);
-        dialogStage.setTitle("Change Password - Campus Club Management System");
-        dialogStage.setResizable(false);
-
-        VBox root = new VBox(18);
-        root.setPadding(new Insets(30, 35, 30, 35));
-        root.setStyle("-fx-background-color: #FFFFFF; -fx-font-family: 'Segoe UI', sans-serif;");
-
-        Label headerTitle = new Label("Change Password");
-        headerTitle.getStyleClass().add("login-heading");
-
-        Label headerSub = new Label("Update your account security credentials");
-        headerSub.getStyleClass().add("login-subheading");
-
-        VBox headerBox = new VBox(4, headerTitle, headerSub);
-
-        // 1. Current Password
-        Label currentLbl = new Label("Current Password");
-        currentLbl.getStyleClass().add("form-label");
-
-        PasswordField currentPwdField = new PasswordField();
-        currentPwdField.setPromptText("Enter current password");
-        currentPwdField.getStyleClass().add("form-input");
-
-        TextField currentTxtField = new TextField();
-        currentTxtField.setPromptText("Enter current password");
-        currentTxtField.getStyleClass().add("form-input");
-        currentTxtField.setVisible(false);
-        currentTxtField.setManaged(false);
-
-        bindFields(currentPwdField, currentTxtField);
-
-        // 2. New Password
-        Label newLbl = new Label("New Password");
-        newLbl.getStyleClass().add("form-label");
-
-        PasswordField newPwdField = new PasswordField();
-        newPwdField.setPromptText("Enter new password");
-        newPwdField.getStyleClass().add("form-input");
-
-        TextField newTxtField = new TextField();
-        newTxtField.setPromptText("Enter new password");
-        newTxtField.getStyleClass().add("form-input");
-        newTxtField.setVisible(false);
-        newTxtField.setManaged(false);
-
-        bindFields(newPwdField, newTxtField);
-
-        // 3. Confirm New Password
-        Label confirmLbl = new Label("Confirm New Password");
-        confirmLbl.getStyleClass().add("form-label");
-
-        PasswordField confirmPwdField = new PasswordField();
-        confirmPwdField.setPromptText("Confirm new password");
-        confirmPwdField.getStyleClass().add("form-input");
-
-        TextField confirmTxtField = new TextField();
-        confirmTxtField.setPromptText("Confirm new password");
-        confirmTxtField.getStyleClass().add("form-input");
-        confirmTxtField.setVisible(false);
-        confirmTxtField.setManaged(false);
-
-        bindFields(confirmPwdField, confirmTxtField);
-
-        // Show / Hide Password Checkbox
-        CheckBox showPwdCheckBox = new CheckBox("Show Passwords");
-        showPwdCheckBox.setStyle("-fx-text-fill: #667085; -fx-font-size: 12px;");
-        showPwdCheckBox.setOnAction(e -> {
-            boolean visible = showPwdCheckBox.isSelected();
-
-            toggleFieldVisibility(currentPwdField, currentTxtField, visible);
-            toggleFieldVisibility(newPwdField, newTxtField, visible);
-            toggleFieldVisibility(confirmPwdField, confirmTxtField, visible);
-        });
-
-        // Action Buttons
-        Button changeBtn = new Button("Change Password");
-        changeBtn.getStyleClass().add("login-submit-button");
-        changeBtn.setMaxWidth(Double.MAX_VALUE);
-
-        Button cancelBtn = new Button("Cancel");
-        cancelBtn.getStyleClass().add("back-button");
-        cancelBtn.setMaxWidth(Double.MAX_VALUE);
-        cancelBtn.setOnAction(e -> dialogStage.close());
-
-        changeBtn.setOnAction(e -> {
-            String currentPwd = showPwdCheckBox.isSelected() ? currentTxtField.getText() : currentPwdField.getText();
-            String newPwd = showPwdCheckBox.isSelected() ? newTxtField.getText() : newPwdField.getText();
-            String confirmPwd = showPwdCheckBox.isSelected() ? confirmTxtField.getText() : confirmPwdField.getText();
-
-            // Validation 1: Check empty fields
-            if (currentPwd == null || currentPwd.trim().isEmpty() ||
-                newPwd == null || newPwd.trim().isEmpty() ||
-                confirmPwd == null || confirmPwd.trim().isEmpty()) {
-                AlertUtils.showWarning(
-                    "Validation Error",
-                    "Empty Fields",
-                    "Please fill in all password fields."
-                );
-                return;
-            }
-
-            // Validation 2: New password and confirm must match
-            if (!newPwd.equals(confirmPwd)) {
-                AlertUtils.showWarning(
-                    "Validation Error",
-                    "Password Mismatch",
-                    "New Password and Confirm New Password do not match."
-                );
-                return;
-            }
-
-            // Validation 3: Verify current password against MySQL DB
-            try {
-                boolean isCurrentValid = userDAO.verifyPassword(studentUser.getUserId(), currentPwd.trim());
-                if (!isCurrentValid) {
-                    AlertUtils.showError(
-                        "Validation Error",
-                        "Incorrect Current Password",
-                        "The current password you entered is incorrect."
-                    );
-                    return;
-                }
-
-                // Execute Update in MySQL users table for currently logged-in student ONLY
-                boolean updated = userDAO.updatePassword(studentUser.getUserId(), newPwd.trim());
-                if (updated) {
-                    studentUser.setPassword(newPwd.trim()); // Update memory object
-
-                    AlertUtils.showInfo(
-                        "Success",
-                        "Password Changed",
-                        "Your password has been successfully updated!"
-                    );
-
-                    // Clear fields and close dialog
-                    currentPwdField.clear();
-                    currentTxtField.clear();
-                    newPwdField.clear();
-                    newTxtField.clear();
-                    confirmPwdField.clear();
-                    confirmTxtField.clear();
-
-                    dialogStage.close();
-                } else {
-                    AlertUtils.showError(
-                        "Update Failed",
-                        "Database Error",
-                        "Failed to update password in database."
-                    );
-                }
-
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                AlertUtils.showError(
-                    "Database Error",
-                    "Error Updating Password",
-                    "Error: " + ex.getMessage()
-                );
-            }
-        });
-
-        HBox btnBox = new HBox(12, cancelBtn, changeBtn);
-        btnBox.setAlignment(Pos.CENTER_RIGHT);
-
-        VBox formBox = new VBox(12,
-            new VBox(4, currentLbl, currentPwdField, currentTxtField),
-            new VBox(4, newLbl, newPwdField, newTxtField),
-            new VBox(4, confirmLbl, confirmPwdField, confirmTxtField),
-            showPwdCheckBox
-        );
-
-        root.getChildren().addAll(headerBox, formBox, btnBox);
-
-        Scene dialogScene = new Scene(root, 420, 520);
-        if (getScene() != null && !getScene().getStylesheets().isEmpty()) {
-            dialogScene.getStylesheets().addAll(getScene().getStylesheets());
-        }
-
-        dialogStage.setScene(dialogScene);
-        dialogStage.showAndWait();
-    }
-
-    private void bindFields(PasswordField pwd, TextField txt) {
-        pwd.textProperty().addListener((obs, oldV, newV) -> {
-            if (!txt.getText().equals(newV)) txt.setText(newV);
-        });
-        txt.textProperty().addListener((obs, oldV, newV) -> {
-            if (!pwd.getText().equals(newV)) pwd.setText(newV);
-        });
-    }
-
-    private void toggleFieldVisibility(PasswordField pwd, TextField txt, boolean visible) {
-        if (visible) {
-            pwd.setVisible(false);
-            pwd.setManaged(false);
-            txt.setVisible(true);
-            txt.setManaged(true);
-        } else {
-            txt.setVisible(false);
-            txt.setManaged(false);
-            pwd.setVisible(true);
-            pwd.setManaged(true);
-        }
+        Stage owner = (getScene() != null && getScene().getWindow() instanceof Stage) ? (Stage) getScene().getWindow() : null;
+        new ChangePasswordDialog(studentUser, controller.getUserDAO()).showAndWait(owner);
     }
 
     private void handleLogoutAction() {
@@ -780,17 +529,19 @@ public class StudentDashboardView extends BorderPane {
     // =========================================================================
 
     private void loadClubsView() {
-        loadClubsFiltered("Technical", null);
+        loadClubsFiltered(null, null);
     }
 
     private void loadClubsFiltered(String categoryFilter, String clubNameFilter) {
         mainContentArea.getChildren().clear();
 
-        String activeCat = categoryFilter != null ? categoryFilter : "Technical";
-        String titleText = activeCat + " Clubs";
-        String subText = "Explore active campus " + activeCat.toLowerCase() + " clubs and organizations";
+        String activeCat = (categoryFilter != null && !categoryFilter.trim().isEmpty()) ? categoryFilter : "All";
+        String titleText = "All".equalsIgnoreCase(activeCat) ? "Campus Clubs" : activeCat + " Clubs";
+        String subText = "All".equalsIgnoreCase(activeCat) 
+            ? "Explore active campus clubs and student organizations" 
+            : "Explore active campus " + activeCat.toLowerCase() + " clubs and organizations";
 
-        if (clubNameFilter != null) {
+        if (clubNameFilter != null && !clubNameFilter.trim().isEmpty()) {
             titleText = "Club: " + clubNameFilter;
             subText = "Explore details and membership status for " + clubNameFilter;
         }
@@ -802,21 +553,30 @@ public class StudentDashboardView extends BorderPane {
 
         VBox header = new VBox(4, title, sub);
 
-        // Top Control Bar: Search Input + Filter Button ONLY (Pills removed per specification)
+        // Top Control Bar: Search Input + Filter Toggle Button
         HBox searchFilterBar = new HBox(12);
         searchFilterBar.setAlignment(Pos.CENTER_LEFT);
 
         TextField searchInput = new TextField();
-        searchInput.setPromptText("Search clubs...");
+        searchInput.setPromptText("Search clubs by name, description, or category...");
         searchInput.getStyleClass().add("form-input");
         HBox.setHgrow(searchInput, Priority.ALWAYS);
 
-        Button filterBtn = new Button("Filter ⚡");
+        Button filterBtn = new Button("Category: " + activeCat + " ⚡");
         filterBtn.getStyleClass().add("filter-btn-outline");
+        filterBtn.setOnAction(e -> {
+            if (categoryFilter == null || "All".equalsIgnoreCase(categoryFilter)) {
+                loadClubsFiltered("Technical", clubNameFilter);
+            } else if ("Technical".equalsIgnoreCase(categoryFilter)) {
+                loadClubsFiltered("Non-Technical", clubNameFilter);
+            } else {
+                loadClubsFiltered(null, clubNameFilter);
+            }
+        });
 
         searchFilterBar.getChildren().addAll(searchInput, filterBtn);
 
-        // Responsive Cards Grid Container (3 compact cards per row)
+        // Responsive Cards Grid Container
         FlowPane cardsGrid = new FlowPane();
         cardsGrid.setHgap(20);
         cardsGrid.setVgap(20);
@@ -830,84 +590,36 @@ public class StudentDashboardView extends BorderPane {
             try {
                 List<Club> allClubs;
                 try {
-                    allClubs = clubDAO.getAllClubs();
+                    allClubs = controller.getAllClubs();
                 } catch (Exception ex) {
                     allClubs = new java.util.ArrayList<>();
                 }
 
                 List<Club> joinedClubs;
                 try {
-                    joinedClubs = clubDAO.getClubsForUser(userId);
+                    joinedClubs = controller.getClubsForUser(userId);
                 } catch (Exception ex) {
                     joinedClubs = new java.util.ArrayList<>();
                 }
 
-                List<Club> displayClubs = new java.util.ArrayList<>();
-
-                // SCRS (exactly 1 instance)
-                Club scrsClub = allClubs.stream()
-                    .filter(c -> c.getName().equalsIgnoreCase("SCRS") || c.getName().toLowerCase().contains("scrs"))
-                    .findFirst()
-                    .orElse(new Club(1, "SCRS", "Technical",
-                        "Encouraging undergraduate and postgraduate students to explore advanced computing domains and publish scientific papers.",
-                        "⚙️", "Not Joined"));
-                scrsClub.setName("SCRS");
-                scrsClub.setCategory("Technical");
-                scrsClub.setDescription("Encouraging undergraduate and postgraduate students to explore advanced computing domains and publish scientific papers.");
-                displayClubs.add(scrsClub);
-
-                // IEEE SMC (exactly 1 instance)
-                Club smcClub = allClubs.stream()
-                    .filter(c -> c.getName().equalsIgnoreCase("IEEE SMC") || c.getName().toLowerCase().contains("smc"))
-                    .findFirst()
-                    .orElse(new Club(2, "IEEE SMC", "Technical",
-                        "Brainstorming and building real-world application prototypes during collaborative campus marathons.",
-                        "🤖", "Not Joined"));
-                smcClub.setName("IEEE SMC");
-                smcClub.setCategory("Technical");
-                smcClub.setDescription("Brainstorming and building real-world application prototypes during collaborative campus marathons.");
-                displayClubs.add(smcClub);
-
-                // Vishaka (exactly 1 instance)
-                Club vishakaClub = allClubs.stream()
-                    .filter(c -> c.getName().equalsIgnoreCase("Vishaka") || c.getName().toLowerCase().contains("vishaka"))
-                    .findFirst()
-                    .orElse(new Club(4, "Vishaka", "Non-Technical",
-                        "The club acts as a creative hub dedicated to blending cultural tradition with innovative entertainment, fostering artistic expression among university students.",
-                        "🌸", "Not Joined"));
-                vishakaClub.setName("Vishaka");
-                vishakaClub.setCategory("Non-Technical");
-                vishakaClub.setDescription("The club acts as a creative hub dedicated to blending cultural tradition with innovative entertainment, fostering artistic expression among university students.");
-                displayClubs.add(vishakaClub);
-
-                for (Club club : displayClubs) {
-                    boolean isVishaka = club.getName().equalsIgnoreCase("Vishaka");
-                    boolean isSCRS = club.getName().equalsIgnoreCase("SCRS");
-                    boolean isSMC = club.getName().equalsIgnoreCase("IEEE SMC");
-
-                    boolean isNonTechCategory = categoryFilter != null && 
-                        ("Non-Technical".equalsIgnoreCase(categoryFilter) || "Non Technical".equalsIgnoreCase(categoryFilter));
-                    boolean isTechCategory = categoryFilter == null || "Technical".equalsIgnoreCase(categoryFilter);
-
-                    if (isNonTechCategory) {
-                        // Non-Technical view MUST display ONLY Vishaka card
-                        if (!isVishaka) {
+                for (Club club : allClubs) {
+                    // Category filtering
+                    if (categoryFilter != null && !categoryFilter.trim().isEmpty() && !"All".equalsIgnoreCase(categoryFilter)) {
+                        if (!categoryFilter.equalsIgnoreCase(club.getCategory())) {
                             continue;
                         }
-                    } else if (isTechCategory) {
-                        // Technical view MUST display EXACTLY TWO cards: SCRS and IEEE SMC
-                        if (!isSCRS && !isSMC) {
-                            continue;
-                        }
-                    } else if (categoryFilter != null && !club.getCategory().equalsIgnoreCase(categoryFilter)) {
-                        continue;
                     }
 
-                    if (clubNameFilter != null && !club.getName().toLowerCase().contains(clubNameFilter.toLowerCase())) {
-                        continue;
+                    // Specific club name filter
+                    if (clubNameFilter != null && !clubNameFilter.trim().isEmpty()) {
+                        if (!club.getName().toLowerCase().contains(clubNameFilter.toLowerCase())) {
+                            continue;
+                        }
                     }
+
+                    // Search query filtering
                     if (!query.isEmpty()) {
-                        boolean nameMatch = club.getName().toLowerCase().contains(query);
+                        boolean nameMatch = club.getName() != null && club.getName().toLowerCase().contains(query);
                         boolean descMatch = club.getDescription() != null && club.getDescription().toLowerCase().contains(query);
                         boolean catMatch = club.getCategory() != null && club.getCategory().toLowerCase().contains(query);
                         if (!nameMatch && !descMatch && !catMatch) {
@@ -923,7 +635,7 @@ public class StudentDashboardView extends BorderPane {
                 if (cardsGrid.getChildren().isEmpty()) {
                     VBox emptyCard = new VBox(10);
                     emptyCard.getStyleClass().add("dashboard-section-card");
-                    Label emptyLbl = new Label("No clubs matching your search criteria found.");
+                    Label emptyLbl = new Label("No clubs matching your criteria found.");
                     emptyLbl.getStyleClass().add("card-desc");
                     emptyCard.getChildren().add(emptyLbl);
                     cardsGrid.getChildren().add(emptyCard);
@@ -943,11 +655,51 @@ public class StudentDashboardView extends BorderPane {
         mainContentArea.getChildren().addAll(header, searchFilterBar, cardsGrid);
     }
 
-    private VBox createCompactClubCard(Club club, boolean isJoined, int userId, String currentCatFilter, String currentNameFilter) {
-        boolean isVishaka = club.getName().equalsIgnoreCase("Vishaka");
-        boolean isSCRS = club.getName().equalsIgnoreCase("SCRS");
-        boolean isSMC = club.getName().equalsIgnoreCase("IEEE SMC") || club.getName().contains("SMC");
+    private String resolveClubLogoPath(Club club) {
+        if (club == null || club.getName() == null) return null;
+        String name = club.getName().toLowerCase();
+        if (name.contains("scrs")) {
+            return "/assets/images/scrs_logo.png";
+        } else if (name.contains("ieee") || name.contains("smc")) {
+            return "/assets/images/ieee_smc_logo.png";
+        } else if (name.contains("vishaka")) {
+            return "/assets/images/vishaka_logo.png";
+        } else if (name.contains("acm")) {
+            return "/assets/images/acm_w_logo.png";
+        }
+        return null;
+    }
 
+    private String resolveClubFallbackEmoji(Club club) {
+        if (club == null) return "🎭";
+        if (club.getIcon() != null && !club.getIcon().trim().isEmpty() && !club.getIcon().equals("🎭")) {
+            return club.getIcon();
+        }
+        String name = club.getName() != null ? club.getName().toLowerCase() : "";
+        if (name.contains("scrs")) return "⚙️";
+        if (name.contains("ieee") || name.contains("smc")) return "🤖";
+        if (name.contains("vishaka")) return "🌸";
+        if (name.contains("acm")) return "💻";
+        if ("Technical".equalsIgnoreCase(club.getCategory())) return "⚙️";
+        return "🎭";
+    }
+
+    private String resolveClubSubtitle(Club club) {
+        if (club == null) return "";
+        String name = club.getName() != null ? club.getName() : "";
+        if (name.equalsIgnoreCase("SCRS")) {
+            return "Soft Computing Research Society";
+        } else if (name.equalsIgnoreCase("IEEE SMC")) {
+            return "Systems, Man, and Cybernetics";
+        } else if (name.equalsIgnoreCase("Vishaka")) {
+            return "Creative Hub & Performing Arts";
+        } else if (name.toLowerCase().contains("acm")) {
+            return "Women in Computing Chapter";
+        }
+        return (club.getCategory() != null ? club.getCategory() : "Campus") + " Club";
+    }
+
+    private VBox createCompactClubCard(Club club, boolean isJoined, int userId, String currentCatFilter, String currentNameFilter) {
         VBox card = new VBox(12);
         card.getStyleClass().add("compact-club-card");
         card.setAlignment(Pos.TOP_CENTER);
@@ -957,19 +709,8 @@ public class StudentDashboardView extends BorderPane {
 
         // Header Avatar Icon Box
         Node iconNode = null;
-        String logoPath = null;
-        String fallbackEmoji = "🎭";
-
-        if (isVishaka) {
-            logoPath = "/assets/images/vishaka_logo.png";
-            fallbackEmoji = "🌸";
-        } else if (isSCRS) {
-            logoPath = "/assets/images/scrs_logo.png";
-            fallbackEmoji = "⚙️";
-        } else if (isSMC) {
-            logoPath = "/assets/images/ieee_smc_logo.png";
-            fallbackEmoji = "🤖";
-        }
+        String logoPath = resolveClubLogoPath(club);
+        String fallbackEmoji = resolveClubFallbackEmoji(club);
 
         if (logoPath != null) {
             try {
@@ -989,7 +730,7 @@ public class StudentDashboardView extends BorderPane {
         }
 
         if (iconNode == null) {
-            String icon = club.getIcon() != null ? club.getIcon() : fallbackEmoji;
+            String icon = (club.getIcon() != null && !club.getIcon().trim().isEmpty()) ? club.getIcon() : fallbackEmoji;
             Label iconLbl = new Label(icon);
             iconLbl.setStyle("-fx-font-size: 32px;");
             iconNode = iconLbl;
@@ -999,39 +740,25 @@ public class StudentDashboardView extends BorderPane {
         avatarBox.getStyleClass().add("club-avatar-box");
         avatarBox.setAlignment(Pos.CENTER);
 
-        // Clean Title & Subtitle Mapping
-        String displayTitle;
-        String displaySubtitle;
-
-        if (isSCRS) {
-            displayTitle = "SCRS";
-            displaySubtitle = "Soft Computing Research Society";
-        } else if (isSMC) {
-            displayTitle = "IEEE SMC";
-            displaySubtitle = "Systems, Man, and Cybernetics";
-        } else if (isVishaka) {
-            displayTitle = "Vishaka";
-            displaySubtitle = "Creative Hub & Performing Arts";
-        } else {
-            displayTitle = club.getName();
-            displaySubtitle = club.getCategory() + " Club";
-        }
+        // Title & Subtitle Mapping
+        String displayTitle = club.getName();
+        String displaySubtitle = resolveClubSubtitle(club);
 
         Label titleLbl = new Label(displayTitle);
         titleLbl.getStyleClass().add("compact-card-title");
 
         // Category Badge
         boolean isTech = "Technical".equalsIgnoreCase(club.getCategory());
-        Label catBadge = new Label(club.getCategory());
+        Label catBadge = new Label(club.getCategory() != null ? club.getCategory() : "General");
         catBadge.getStyleClass().add(isTech ? "club-badge-tech" : "club-badge-nontech");
 
         Label subtitleLbl = new Label(displaySubtitle);
         subtitleLbl.getStyleClass().add("compact-card-subtitle");
 
-        // Member Count dynamically retrieved from MySQL DB
+        // Member Count dynamically retrieved from MySQL DB via Controller
         int memberCount = 0;
         try {
-            memberCount = clubDAO.getClubMemberCount(club.getClubId());
+            memberCount = controller.getClubMemberCount(club.getClubId());
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -1041,20 +768,13 @@ public class StudentDashboardView extends BorderPane {
         VBox textStack = new VBox(4, titleLbl, catBadge, subtitleLbl, membersLbl);
         textStack.setAlignment(Pos.CENTER);
 
-        // Action Buttons Side-by-Side HBox with spacing="10" and alignment="CENTER"
+        // Action Buttons Side-by-Side HBox
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER);
 
         Button viewDetailsBtn = new Button("View Details");
         viewDetailsBtn.getStyleClass().add("view-details-btn");
-
-        if (isSCRS) {
-            viewDetailsBtn.setOnAction(e -> handleViewSCRSDetails(club, isJoined, userId));
-        } else if (isSMC) {
-            viewDetailsBtn.setOnAction(e -> handleViewSMCDetails(club, isJoined, userId));
-        } else {
-            viewDetailsBtn.setOnAction(e -> openClubDetailsModal(club, isJoined, userId));
-        }
+        viewDetailsBtn.setOnAction(e -> openClubDetailsModal(club, isJoined, userId));
 
         Button joinBtn;
         if (isJoined) {
@@ -1065,7 +785,7 @@ public class StudentDashboardView extends BorderPane {
             joinBtn.getStyleClass().add("join-pill-btn");
             joinBtn.setOnAction(e -> {
                 try {
-                    boolean success = clubDAO.joinClub(userId, club.getClubId());
+                    boolean success = controller.joinClub(userId, club.getClubId());
                     if (success) {
                         AlertUtils.showInfo("Joined Club", "Success", "You have successfully joined " + displayTitle + "!");
                         loadClubsFiltered(currentCatFilter, currentNameFilter);
@@ -1073,37 +793,15 @@ public class StudentDashboardView extends BorderPane {
                     }
                 } catch (SQLException ex) {
                     ex.printStackTrace();
+                    AlertUtils.showError("Database Error", "Failed to Join Club", ex.getMessage());
                 }
             });
         }
 
         buttonBox.getChildren().addAll(viewDetailsBtn, joinBtn);
-
         card.getChildren().addAll(avatarBox, textStack, buttonBox);
 
         return card;
-    }
-
-    private void handleViewSCRSDetails(Club club, boolean isJoined, int userId) {
-        openClubDetailsModal(club, isJoined, userId);
-    }
-
-    private void handleViewSMCDetails(Club club, boolean isJoined, int userId) {
-        openClubDetailsModal(club, isJoined, userId);
-    }
-
-    private void handleJoinVishaka(Club club, int userId, String currentCatFilter, String currentNameFilter) {
-        try {
-            boolean success = clubDAO.joinClub(userId, club.getClubId());
-            if (success) {
-                AlertUtils.showInfo("Joined Club", "Success", "You have successfully joined Vishaka!");
-                loadClubsFiltered(currentCatFilter, currentNameFilter);
-                refreshStatCards();
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            AlertUtils.showError("Database Error", "Join Failed", "Could not join Vishaka: " + ex.getMessage());
-        }
     }
 
     /**
@@ -1121,19 +819,8 @@ public class StudentDashboardView extends BorderPane {
 
         // Header: Icon + Name
         Node headerIconNode = null;
-        String logoPath = null;
-        String fallbackEmoji = "🎭";
-
-        if (club.getName().equalsIgnoreCase("Vishaka")) {
-            logoPath = "/assets/images/vishaka_logo.png";
-            fallbackEmoji = "🌸";
-        } else if (club.getName().equalsIgnoreCase("SCRS")) {
-            logoPath = "/assets/images/scrs_logo.png";
-            fallbackEmoji = "⚙️";
-        } else if (club.getName().equalsIgnoreCase("IEEE SMC") || club.getName().contains("SMC")) {
-            logoPath = "/assets/images/ieee_smc_logo.png";
-            fallbackEmoji = "🤖";
-        }
+        String logoPath = resolveClubLogoPath(club);
+        String fallbackEmoji = resolveClubFallbackEmoji(club);
 
         if (logoPath != null) {
             try {
@@ -1153,7 +840,7 @@ public class StudentDashboardView extends BorderPane {
         }
 
         if (headerIconNode == null) {
-            String icon = club.getIcon() != null ? club.getIcon() : fallbackEmoji;
+            String icon = (club.getIcon() != null && !club.getIcon().trim().isEmpty()) ? club.getIcon() : fallbackEmoji;
             Label iconLbl = new Label(icon);
             iconLbl.setStyle("-fx-font-size: 36px;");
             headerIconNode = iconLbl;
@@ -1167,7 +854,7 @@ public class StudentDashboardView extends BorderPane {
         titleLbl.getStyleClass().add("login-heading");
 
         boolean isTech = "Technical".equalsIgnoreCase(club.getCategory());
-        Label catBadge = new Label("Category: " + club.getCategory());
+        Label catBadge = new Label("Category: " + (club.getCategory() != null ? club.getCategory() : "General"));
         catBadge.getStyleClass().add(isTech ? "club-badge-tech" : "club-badge-nontech");
 
         VBox headerBox = new VBox(6, titleLbl, catBadge);
@@ -1180,12 +867,8 @@ public class StudentDashboardView extends BorderPane {
         descTitle.getStyleClass().add("dashboard-section-title");
 
         String descriptionStr = club.getDescription();
-        if (club.getName().equalsIgnoreCase("SCRS")) {
-            descriptionStr = "Encouraging undergraduate and postgraduate students to explore advanced computing domains and publish scientific papers.";
-        } else if (club.getName().equalsIgnoreCase("IEEE SMC") || club.getName().contains("SMC")) {
-            descriptionStr = "Brainstorming and building real-world application prototypes during collaborative campus marathons.";
-        } else if (club.getName().equalsIgnoreCase("Vishaka")) {
-            descriptionStr = "The club acts as a creative hub dedicated to blending cultural tradition with innovative entertainment, fostering artistic expression among university students.";
+        if (descriptionStr == null || descriptionStr.trim().isEmpty()) {
+            descriptionStr = "An active campus organization dedicated to student learning, technical collaboration, and campus life engagement.";
         }
         Label descText = new Label(descriptionStr);
         descText.setStyle("-fx-font-size: 13px; -fx-text-fill: #4A5568; -fx-wrap-text: true;");
@@ -1219,7 +902,7 @@ public class StudentDashboardView extends BorderPane {
             actionBtn.getStyleClass().add("login-submit-button");
             actionBtn.setOnAction(e -> {
                 try {
-                    boolean success = clubDAO.joinClub(userId, club.getClubId());
+                    boolean success = controller.joinClub(userId, club.getClubId());
                     if (success) {
                         AlertUtils.showInfo("Joined Club", "Success", "You have joined " + club.getName() + "!");
                         dialogStage.close();
@@ -1228,6 +911,7 @@ public class StudentDashboardView extends BorderPane {
                     }
                 } catch (SQLException ex) {
                     ex.printStackTrace();
+                    AlertUtils.showError("Database Error", "Failed to Join Club", ex.getMessage());
                 }
             });
         }
@@ -1282,7 +966,7 @@ public class StudentDashboardView extends BorderPane {
         int userId = studentUser != null ? studentUser.getUserId() : 0;
 
         try {
-            List<Event> userEvents = eventDAO.getUserRegisteredEvents(userId);
+            List<Event> userEvents = controller.getUserRegisteredEvents(userId);
             if (userEvents.isEmpty()) {
                 Label emptyLbl = new Label("You haven't registered for any events yet.");
                 emptyLbl.getStyleClass().add("card-desc");
@@ -1340,6 +1024,7 @@ public class StudentDashboardView extends BorderPane {
         // Welcome message from Chatbot
         Label botWelcome = new Label("🤖 Bot: Hello " + (studentUser != null ? studentUser.getName() : "Student") + "! How can I help you with campus clubs or upcoming events today?");
         botWelcome.setStyle("-fx-background-color: #E2E8F0; -fx-padding: 10 14 10 14; -fx-background-radius: 14; -fx-text-fill: #18243D; -fx-font-size: 13px;");
+        botWelcome.setWrapText(true);
         chatMessagesBox.getChildren().add(botWelcome);
 
         TextField inputField = new TextField();
@@ -1356,25 +1041,16 @@ public class StudentDashboardView extends BorderPane {
 
             Label userMsg = new Label("👤 You: " + msg);
             userMsg.setStyle("-fx-background-color: #4F8CFF; -fx-padding: 10 14 10 14; -fx-background-radius: 14; -fx-text-fill: #FFFFFF; -fx-font-size: 13px;");
+            userMsg.setWrapText(true);
             chatMessagesBox.getChildren().add(userMsg);
 
             inputField.clear();
 
-            // Simple intelligent response generation
-            String reply;
-            String lower = msg.toLowerCase();
-            if (lower.contains("club")) {
-                reply = "Bot: We have Technical (Coding, Robotics), Cultural, Sports, and Professional (IEEE) clubs available. Check the 'Clubs' tab to view and join!";
-            } else if (lower.contains("event") || lower.contains("register")) {
-                reply = "Bot: You can register for upcoming events directly from your Student Dashboard under the 'Upcoming Events' section by clicking 'Register'.";
-            } else if (lower.contains("password")) {
-                reply = "Bot: You can update your account password anytime by clicking 'Change Password' at the bottom of the left sidebar!";
-            } else {
-                reply = "Bot: I'm here to help! You can ask me about campus clubs, upcoming event registrations, or your participation status.";
-            }
+            String reply = chatbotService.getResponse(msg, studentUser);
 
-            Label botMsg = new Label("🤖 " + reply);
+            Label botMsg = new Label("🤖 Bot: " + reply);
             botMsg.setStyle("-fx-background-color: #E2E8F0; -fx-padding: 10 14 10 14; -fx-background-radius: 14; -fx-text-fill: #18243D; -fx-font-size: 13px;");
+            botMsg.setWrapText(true);
             chatMessagesBox.getChildren().add(botMsg);
         };
 

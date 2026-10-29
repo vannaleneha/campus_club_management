@@ -1,0 +1,13 @@
+# Campus Club Management System (CCMS)
+# Database Configuration Template
+# Copy this file to src/main/resources/db.properties and configure your credentials.
+
+# Database URL (MySQL)
+db.url=jdbc:mysql://localhost:3306/campus_club?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+# Database Username
+db.user=root
+
+# Database Password
+# You can set it here, or pass via environment variable DB_PASSWORD, or via -Ddb.password
+db.password=your_database_password_here

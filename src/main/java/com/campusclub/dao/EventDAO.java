@@ -519,4 +519,68 @@ public class EventDAO {
         }
         return list;
     }
+
+    /**
+     * Retrieves all upcoming events with club names and details for assistant inquiries.
+     */
+    public List<SystemEventRecord> getUpcomingSystemEvents() throws SQLException {
+        List<SystemEventRecord> list = new ArrayList<>();
+        String sql = "SELECT e.event_id, c.name AS club_name, e.title, e.event_date, e.event_time, e.location, " +
+                     "(SELECT COUNT(*) FROM event_registrations er WHERE er.event_id = e.event_id) AS reg_cnt " +
+                     "FROM events e " +
+                     "LEFT JOIN clubs c ON e.club_id = c.club_id " +
+                     "WHERE LOWER(e.status) = 'upcoming' " +
+                     "ORDER BY e.event_id ASC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                list.add(new SystemEventRecord(
+                    rs.getInt("event_id"),
+                    rs.getString("club_name") != null ? rs.getString("club_name") : "Campus Wide",
+                    rs.getString("title"),
+                    rs.getString("event_date"),
+                    rs.getString("event_time"),
+                    rs.getString("location"),
+                    rs.getInt("reg_cnt")
+                ));
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Finds an event by title (case-insensitive partial or exact matching).
+     */
+    public SystemEventRecord findEventByTitle(String title) throws SQLException {
+        if (title == null || title.trim().isEmpty()) return null;
+        String trimmed = title.trim();
+        String sql = "SELECT e.event_id, c.name AS club_name, e.title, e.event_date, e.event_time, e.location, " +
+                     "(SELECT COUNT(*) FROM event_registrations er WHERE er.event_id = e.event_id) AS reg_cnt " +
+                     "FROM events e " +
+                     "LEFT JOIN clubs c ON e.club_id = c.club_id " +
+                     "WHERE LOWER(e.title) = LOWER(?) OR LOWER(e.title) LIKE LOWER(?) " +
+                     "ORDER BY LENGTH(e.title) ASC LIMIT 1";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, trimmed);
+            stmt.setString(2, "%" + trimmed + "%");
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new SystemEventRecord(
+                        rs.getInt("event_id"),
+                        rs.getString("club_name") != null ? rs.getString("club_name") : "Campus Wide",
+                        rs.getString("title"),
+                        rs.getString("event_date"),
+                        rs.getString("event_time"),
+                        rs.getString("location"),
+                        rs.getInt("reg_cnt")
+                    );
+                }
+            }
+        }
+        return null;
+    }
 }

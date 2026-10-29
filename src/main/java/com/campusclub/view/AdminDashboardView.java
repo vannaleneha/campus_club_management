@@ -1,11 +1,9 @@
 package com.campusclub.view;
 
-import com.campusclub.dao.ClubDAO;
+import com.campusclub.controller.AdminDashboardController;
 import com.campusclub.dao.ClubDAO.ClubDetailRecord;
-import com.campusclub.dao.EventDAO;
 import com.campusclub.dao.EventDAO.SystemEventRecord;
 import com.campusclub.dao.EventDAO.SystemParticipationRecord;
-import com.campusclub.dao.UserDAO;
 import com.campusclub.dao.UserDAO.StudentUserRecord;
 import com.campusclub.model.User;
 import com.campusclub.util.AlertUtils;
@@ -34,10 +32,7 @@ public class AdminDashboardView extends BorderPane {
 
     private final User adminUser;
     private final Runnable onLogout;
-
-    private final UserDAO userDAO;
-    private final ClubDAO clubDAO;
-    private final EventDAO eventDAO;
+    private final AdminDashboardController controller;
 
     private VBox mainContentArea;
 
@@ -50,11 +45,13 @@ public class AdminDashboardView extends BorderPane {
     private Button btnReports;
 
     public AdminDashboardView(User adminUser, Runnable onLogout) {
+        this(adminUser, onLogout, new AdminDashboardController());
+    }
+
+    public AdminDashboardView(User adminUser, Runnable onLogout, AdminDashboardController controller) {
         this.adminUser = adminUser;
         this.onLogout = onLogout;
-        this.userDAO = new UserDAO();
-        this.clubDAO = new ClubDAO();
-        this.eventDAO = new EventDAO();
+        this.controller = controller;
 
         initializeUI();
     }
@@ -201,10 +198,10 @@ public class AdminDashboardView extends BorderPane {
         int totalAttendance = 0;
 
         try {
-            totalStudents = userDAO.getStudentsCount();
-            totalClubs = clubDAO.getClubsCount();
-            totalEvents = eventDAO.getTotalEventsCount();
-            totalAttendance = eventDAO.getTotalAttendanceCount();
+            totalStudents = controller.getStudentsCount();
+            totalClubs = controller.getClubsCount();
+            totalEvents = controller.getTotalEventsCount();
+            totalAttendance = controller.getTotalAttendanceCount();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -296,7 +293,7 @@ public class AdminDashboardView extends BorderPane {
 
         List<ClubDetailRecord> clubs = new ArrayList<>();
         try {
-            clubs = clubDAO.getAllClubsWithDetails();
+            clubs = controller.getAllClubsWithDetails();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -338,7 +335,7 @@ public class AdminDashboardView extends BorderPane {
                 btnDelete.setOnAction(e -> {
                     if (AlertUtils.showConfirmation("Confirm Delete", "Delete Club", "Are you sure you want to delete '" + club.name + "'?")) {
                         try {
-                            clubDAO.deleteClub(club.clubId);
+                            controller.deleteClub(club.clubId);
                             AlertUtils.showInfo("Success", "Club Deleted", "The club has been deleted successfully.");
                             showManageClubsView();
                         } catch (SQLException ex) {
@@ -379,7 +376,7 @@ public class AdminDashboardView extends BorderPane {
 
         ComboBox<User> coordCombo = new ComboBox<>();
         try {
-            List<User> coords = userDAO.getAllCoordinators();
+            List<User> coords = controller.getAllCoordinators();
             coordCombo.setItems(FXCollections.observableArrayList(coords));
             if (existing != null && existing.coordinatorId != null) {
                 for (User u : coords) {
@@ -411,10 +408,10 @@ public class AdminDashboardView extends BorderPane {
 
             try {
                 if (existing == null) {
-                    clubDAO.createClub(name, cat, desc, coordId);
+                    controller.createClub(name, cat, desc, coordId);
                     AlertUtils.showInfo("Success", "Club Created", "New club created successfully!");
                 } else {
-                    clubDAO.updateClub(existing.clubId, name, cat, desc, coordId);
+                    controller.updateClub(existing.clubId, name, cat, desc, coordId);
                     AlertUtils.showInfo("Success", "Club Updated", "Club updated successfully!");
                 }
                 dialog.close();
@@ -466,7 +463,7 @@ public class AdminDashboardView extends BorderPane {
 
         List<User> coords = new ArrayList<>();
         try {
-            coords = userDAO.getAllCoordinators();
+            coords = controller.getAllCoordinators();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -503,7 +500,7 @@ public class AdminDashboardView extends BorderPane {
                 btnDelete.setOnAction(e -> {
                     if (AlertUtils.showConfirmation("Confirm Remove", "Remove Coordinator", "Remove coordinator account for '" + coord.getName() + "'?")) {
                         try {
-                            userDAO.deleteCoordinator(coord.getUserId());
+                            controller.deleteCoordinator(coord.getUserId());
                             AlertUtils.showInfo("Success", "Coordinator Removed", "Coordinator account removed.");
                             showManageCoordinatorsView();
                         } catch (SQLException ex) {
@@ -560,10 +557,10 @@ public class AdminDashboardView extends BorderPane {
 
             try {
                 if (existing == null) {
-                    userDAO.createCoordinator(name, email, pwd);
+                    controller.createCoordinator(name, email, pwd);
                     AlertUtils.showInfo("Success", "Coordinator Created", "Coordinator account created successfully!");
                 } else {
-                    userDAO.updateCoordinator(existing.getUserId(), name, email);
+                    controller.updateCoordinator(existing.getUserId(), name, email);
                     AlertUtils.showInfo("Success", "Coordinator Updated", "Coordinator details updated successfully!");
                 }
                 dialog.close();
@@ -605,7 +602,7 @@ public class AdminDashboardView extends BorderPane {
         container.setStyle("-fx-background-color: white; -fx-background-radius: 12px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 2);");
 
         try {
-            List<StudentUserRecord> students = userDAO.getAllStudents();
+            List<StudentUserRecord> students = controller.getAllStudents();
 
             if (students.isEmpty()) {
                 Label empty = new Label("No registered student accounts found.");
@@ -663,7 +660,7 @@ public class AdminDashboardView extends BorderPane {
         container.setStyle("-fx-background-color: white; -fx-background-radius: 12px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 2);");
 
         try {
-            List<SystemEventRecord> events = eventDAO.getAllSystemEvents();
+            List<SystemEventRecord> events = controller.getAllSystemEvents();
 
             if (events.isEmpty()) {
                 Label empty = new Label("No events registered in the system.");
@@ -725,7 +722,7 @@ public class AdminDashboardView extends BorderPane {
         container.setStyle("-fx-background-color: white; -fx-background-radius: 12px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 2);");
 
         try {
-            List<SystemParticipationRecord> reports = eventDAO.getSystemWideParticipation();
+            List<SystemParticipationRecord> reports = controller.getSystemWideParticipation();
 
             if (reports.isEmpty()) {
                 Label empty = new Label("No participation data available yet.");
@@ -769,66 +766,10 @@ public class AdminDashboardView extends BorderPane {
     }
 
     // =========================================================================
-    // CHANGE PASSWORD MODAL
+    // CHANGE PASSWORD MODAL (REUSABLE COMPONENT)
     // =========================================================================
     private void openChangePasswordModal() {
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.setTitle("Change Password");
-
-        VBox form = new VBox(14);
-        form.setPadding(new Insets(24));
-        form.setStyle("-fx-background-color: white;");
-
-        PasswordField currentPwdFld = new PasswordField();
-        currentPwdFld.setPromptText("Current Password");
-
-        PasswordField newPwdFld = new PasswordField();
-        newPwdFld.setPromptText("New Password");
-
-        PasswordField confirmPwdFld = new PasswordField();
-        confirmPwdFld.setPromptText("Confirm New Password");
-
-        Button btnSave = new Button("Update Password");
-        btnSave.setStyle("-fx-background-color: #E11D48; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 6px; -fx-cursor: hand;");
-        btnSave.setOnAction(e -> {
-            String current = currentPwdFld.getText();
-            String newPwd = newPwdFld.getText();
-            String confirm = confirmPwdFld.getText();
-
-            if (current.isEmpty() || newPwd.isEmpty() || confirm.isEmpty()) {
-                AlertUtils.showWarning("Warning", "Empty Fields", "Please fill in all password fields.");
-                return;
-            }
-
-            if (!newPwd.equals(confirm)) {
-                AlertUtils.showWarning("Warning", "Password Mismatch", "New password and Confirm password do not match.");
-                return;
-            }
-
-            try {
-                if (!userDAO.verifyPassword(adminUser.getUserId(), current)) {
-                    AlertUtils.showError("Error", "Invalid Password", "Current password is incorrect.");
-                    return;
-                }
-
-                userDAO.updatePassword(adminUser.getUserId(), newPwd);
-                AlertUtils.showInfo("Success", "Password Changed", "Your admin password has been changed successfully!");
-                dialog.close();
-            } catch (SQLException ex) {
-                AlertUtils.showError("Database Error", "Failed to change password", ex.getMessage());
-            }
-        });
-
-        form.getChildren().addAll(
-            new Label("Current Password:"), currentPwdFld,
-            new Label("New Password:"), newPwdFld,
-            new Label("Confirm New Password:"), confirmPwdFld,
-            btnSave
-        );
-
-        Scene scene = new Scene(form, 360, 320);
-        dialog.setScene(scene);
-        dialog.showAndWait();
+        Stage owner = (getScene() != null && getScene().getWindow() instanceof Stage) ? (Stage) getScene().getWindow() : null;
+        new ChangePasswordDialog(adminUser, controller.getUserDAO()).showAndWait(owner);
     }
 }

@@ -278,4 +278,58 @@ public class ClubDAO {
             }
         }
     }
+
+    /**
+     * Finds a club by exact or partial name matching (case-insensitive).
+     */
+    public Club findClubByName(String name) throws SQLException {
+        if (name == null || name.trim().isEmpty()) return null;
+        String trimmed = name.trim();
+        String sql = "SELECT club_id, name, category, description, icon FROM clubs " +
+                     "WHERE LOWER(name) = LOWER(?) OR LOWER(name) LIKE LOWER(?) ORDER BY LENGTH(name) ASC LIMIT 1";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, trimmed);
+            stmt.setString(2, "%" + trimmed + "%");
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Club(
+                        rs.getInt("club_id"),
+                        rs.getString("name"),
+                        rs.getString("category"),
+                        rs.getString("description"),
+                        rs.getString("icon"),
+                        "Not Joined"
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Retrieves clubs filtered by category (e.g. Technical, Non-Technical).
+     */
+    public List<Club> getClubsByCategory(String category) throws SQLException {
+        List<Club> list = new ArrayList<>();
+        String sql = "SELECT club_id, name, category, description, icon FROM clubs WHERE LOWER(category) = LOWER(?) ORDER BY name ASC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, category.trim());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Club(
+                        rs.getInt("club_id"),
+                        rs.getString("name"),
+                        rs.getString("category"),
+                        rs.getString("description"),
+                        rs.getString("icon"),
+                        "Not Joined"
+                    ));
+                }
+            }
+        }
+        return list;
+    }
 }

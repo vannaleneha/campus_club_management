@@ -8,6 +8,10 @@ target/
 # Java
 *.class
 
+# Database credentials & local configs
+# Keep db.properties private; use db.properties.example for repository setup
+src/main/resources/db.properties
+
 # OS files
 .DS_Store
 Thumbs.db

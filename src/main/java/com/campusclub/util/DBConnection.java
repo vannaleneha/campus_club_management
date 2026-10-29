@@ -11,7 +11,8 @@ import java.util.Properties;
 
 /**
  * DBConnection manager for MySQL backend.
- * Reads database parameters from db.properties or system properties without hardcoding credentials.
+ * Reads database parameters from system properties, environment variables, or db.properties.
+ * Ensures database schema, BCrypt-hashed baseline users, and initial seeds are initialized once on startup.
  */
 public class DBConnection {
 
@@ -19,7 +20,7 @@ public class DBConnection {
     private static String dbUser;
     private static String dbPassword;
 
-    private static Connection connection = null;
+    private static volatile boolean schemaInitialized = false;
 
     static {
         loadProperties();
@@ -40,10 +41,25 @@ public class DBConnection {
             System.err.println("Could not load db.properties: " + e.getMessage());
         }
 
-        dbUrl = System.getProperty("db.url", props.getProperty("db.url", "jdbc:mysql://localhost:3306/campus_club?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"));
-        dbUser = System.getProperty("db.user", props.getProperty("db.user", "root"));
-        
-        // Priority: -Ddb.password > DB_PASSWORD env var > db.properties
+        // Priority: -Ddb.url > DB_URL env var > db.properties > sensible default
+        dbUrl = System.getProperty("db.url");
+        if (dbUrl == null || dbUrl.trim().isEmpty()) {
+            dbUrl = System.getenv("DB_URL");
+        }
+        if (dbUrl == null || dbUrl.trim().isEmpty()) {
+            dbUrl = props.getProperty("db.url", "jdbc:mysql://localhost:3306/campus_club?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
+        }
+
+        // Priority: -Ddb.user > DB_USER env var > db.properties > default root
+        dbUser = System.getProperty("db.user");
+        if (dbUser == null || dbUser.trim().isEmpty()) {
+            dbUser = System.getenv("DB_USER");
+        }
+        if (dbUser == null || dbUser.trim().isEmpty()) {
+            dbUser = props.getProperty("db.user", "root");
+        }
+
+        // Priority: -Ddb.password > DB_PASSWORD env var > db.properties > default empty
         dbPassword = System.getProperty("db.password");
         if (dbPassword == null) {
             dbPassword = System.getenv("DB_PASSWORD");
@@ -55,23 +71,31 @@ public class DBConnection {
 
     public static void setPassword(String password) {
         dbPassword = password;
-        connection = null;
+        schemaInitialized = false;
     }
 
     /**
      * Obtains an active connection to the MySQL database.
+     * Ensures schema initialization is performed once before returning connections.
      */
     public static Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            ensureTableAndUsers();
-            connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-        }
-        return connection;
+        ensureDatabaseInitialized();
+        return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
     }
 
     /**
-     * Ensures the users table exists, contains ONLY the 3 specified student records (NEHA, CHARMI, PUJITHA),
-     * and resets table data to match exact required state.
+     * Thread-safe one-time initialization of database tables and initial baseline seeds.
+     */
+    public static synchronized void ensureDatabaseInitialized() throws SQLException {
+        if (!schemaInitialized) {
+            ensureTableAndUsers();
+            schemaInitialized = true;
+        }
+    }
+
+    /**
+     * Ensures required tables (users, clubs, club_members, events, event_registrations, attendance)
+     * and default seed users exist with BCrypt-hashed passwords.
      */
     public static void ensureTableAndUsers() throws SQLException {
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
@@ -87,7 +111,7 @@ public class DBConnection {
                     ")";
             stmt.executeUpdate(createTableSQL);
 
-            // Check if admin user exists, insert if missing
+            // Check if admin user exists, insert with BCrypt hash if missing
             boolean adminExists = false;
             try (PreparedStatement adminStmt = conn.prepareStatement("SELECT COUNT(*) FROM users WHERE LOWER(role) = 'admin'")) {
                 try (ResultSet rs = adminStmt.executeQuery()) {
@@ -96,32 +120,50 @@ public class DBConnection {
                     }
                 }
             }
-
             if (!adminExists) {
-                stmt.executeUpdate("INSERT INTO users (name, email, password, role) VALUES ('System Admin', 'admin@klu.ac.in', 'admin123', 'Admin')");
+                insertSeedUser(conn, "System Admin", "admin@klu.ac.in", "admin123", "Admin");
             }
 
-            // Verify if exact student records exist
+            // Check if default coordinator exists, insert with BCrypt hash if missing for instant testing
+            boolean coordExists = false;
+            try (PreparedStatement coordStmt = conn.prepareStatement("SELECT COUNT(*) FROM users WHERE LOWER(role) = 'coordinator'")) {
+                try (ResultSet rs = coordStmt.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        coordExists = true;
+                    }
+                }
+            }
+            if (!coordExists) {
+                insertSeedUser(conn, "Jordan Coordinator", "coord@klu.ac.in", "coord123", "Coordinator");
+            }
+
+            // Verify if exact student records exist, insert with BCrypt hash if missing
             boolean nehaExists = checkUserExists(conn, "99250040554@klu.ac.in", "NEHA");
             boolean charmiExists = checkUserExists(conn, "99250040558@klu.ac.in", "CHARMI");
             boolean pujithaExists = checkUserExists(conn, "99250040562@klu.ac.in", "PUJITHA");
 
-            ResultSet countRs = stmt.executeQuery("SELECT COUNT(*) FROM users");
-            int totalCount = (countRs.next()) ? countRs.getInt(1) : 0;
-
-            if (!nehaExists || !charmiExists || !pujithaExists) {
-                if (!nehaExists) {
-                    stmt.executeUpdate("INSERT INTO users (name, email, password, role) VALUES ('NEHA', '99250040554@klu.ac.in', '99250040554', 'Student')");
-                }
-                if (!charmiExists) {
-                    stmt.executeUpdate("INSERT INTO users (name, email, password, role) VALUES ('CHARMI', '99250040558@klu.ac.in', '99250040558', 'Student')");
-                }
-                if (!pujithaExists) {
-                    stmt.executeUpdate("INSERT INTO users (name, email, password, role) VALUES ('PUJITHA', '99250040562@klu.ac.in', '99250040562', 'Student')");
-                }
+            if (!nehaExists) {
+                insertSeedUser(conn, "NEHA", "99250040554@klu.ac.in", "99250040554", "Student");
+            }
+            if (!charmiExists) {
+                insertSeedUser(conn, "CHARMI", "99250040558@klu.ac.in", "99250040558", "Student");
+            }
+            if (!pujithaExists) {
+                insertSeedUser(conn, "PUJITHA", "99250040562@klu.ac.in", "99250040562", "Student");
             }
 
             ensureClubsAndEventsTables(stmt);
+        }
+    }
+
+    private static void insertSeedUser(Connection conn, String name, String email, String plainPassword, String role) throws SQLException {
+        String sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, name);
+            stmt.setString(2, email);
+            stmt.setString(3, PasswordUtil.hashPassword(plainPassword));
+            stmt.setString(4, role);
+            stmt.executeUpdate();
         }
     }
 
@@ -143,7 +185,7 @@ public class DBConnection {
             // Column already exists
         }
 
-        // Seed or update clubs with exact requirements
+        // Seed clubs if empty
         ResultSet clubsRs = stmt.executeQuery("SELECT COUNT(*) FROM clubs");
         if (clubsRs.next() && clubsRs.getInt(1) == 0) {
             stmt.executeUpdate("INSERT INTO clubs (club_id, name, category, description, icon) VALUES " +
@@ -151,12 +193,16 @@ public class DBConnection {
                     "(2, 'IEEE SMC', 'Technical', 'Brainstorming and building real-world application prototypes during collaborative campus marathons.', '🤖'), " +
                     "(4, 'Vishaka', 'Non-Technical', 'The club acts as a creative hub dedicated to blending cultural tradition with innovative entertainment, fostering artistic expression among university students.', '🌸')");
         } else {
-            // Update descriptions and details for existing records
+            // Update descriptions and details for default clubs without deleting user-created clubs
             stmt.executeUpdate("UPDATE clubs SET name = 'SCRS', category = 'Technical', description = 'Encouraging undergraduate and postgraduate students to explore advanced computing domains and publish scientific papers.', icon = '⚙️' WHERE club_id = 1 OR name LIKE '%SCRS%'");
             stmt.executeUpdate("UPDATE clubs SET name = 'IEEE SMC', category = 'Technical', description = 'Brainstorming and building real-world application prototypes during collaborative campus marathons.', icon = '🤖' WHERE club_id = 2 OR name LIKE '%IEEE%' OR name LIKE '%SMC%'");
             stmt.executeUpdate("UPDATE clubs SET name = 'Vishaka', category = 'Non-Technical', description = 'The club acts as a creative hub dedicated to blending cultural tradition with innovative entertainment, fostering artistic expression among university students.', icon = '🌸' WHERE club_id = 4 OR name LIKE '%Vishaka%'");
-            // Remove obsolete placeholder/duplicate rows if present
-            stmt.executeUpdate("DELETE FROM clubs WHERE name NOT IN ('SCRS', 'IEEE SMC', 'Vishaka')");
+        }
+
+        // Link default coordinator to club 1 if unassigned
+        try {
+            stmt.executeUpdate("UPDATE clubs SET coordinator_id = (SELECT user_id FROM users WHERE email = 'coord@klu.ac.in' LIMIT 1) WHERE club_id = 1 AND coordinator_id IS NULL");
+        } catch (SQLException ignored) {
         }
 
         // 2. Create club_members table
@@ -180,6 +226,15 @@ public class DBConnection {
                 "description TEXT, " +
                 "status VARCHAR(20) DEFAULT 'Upcoming'" +
                 ")");
+
+        // Seed initial sample events if events table is empty
+        ResultSet eventsRs = stmt.executeQuery("SELECT COUNT(*) FROM events");
+        if (eventsRs.next() && eventsRs.getInt(1) == 0) {
+            stmt.executeUpdate("INSERT INTO events (club_id, title, event_date, event_time, location, description, status) VALUES " +
+                    "(1, 'Soft Computing & AI Workshop', 'Nov 15, 2026', '10:00 AM', 'Room 301, Engineering Block', 'Hands-on training session on neural networks, fuzzy systems, and computing applications.', 'Upcoming'), " +
+                    "(2, 'Autonomous Systems Hackathon', 'Nov 20, 2026', '09:00 AM', 'Innovation Lab 2', 'Collaborative 24-hour sprint prototyping cybernetics and IoT solutions.', 'Upcoming'), " +
+                    "(4, 'Vishaka Cultural Orientation', 'Nov 28, 2026', '03:00 PM', 'Main Auditorium', 'Annual welcome and performing arts showcase celebrating university creative talents.', 'Upcoming')");
+        }
 
         // 4. Create event_registrations table
         stmt.executeUpdate("CREATE TABLE IF NOT EXISTS event_registrations (" +

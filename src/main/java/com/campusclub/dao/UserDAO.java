@@ -2,6 +2,7 @@ package com.campusclub.dao;
 
 import com.campusclub.model.User;
 import com.campusclub.util.DBConnection;
+import com.campusclub.util.PasswordUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,39 +13,51 @@ import java.util.List;
 
 /**
  * Data Access Object for user authentication and user database queries.
+ * Integrates BCrypt password hashing for secure authentication, verification, and migration.
  */
 public class UserDAO {
 
     /**
-     * Authenticates a user against the users table using PreparedStatement.
+     * Authenticates a user against the users table using PreparedStatement and BCrypt password verification.
+     * Automatically migrates legacy plain-text passwords to secure BCrypt hashes upon successful login.
      *
      * @param emailOrRoll User's email or roll number (user_id).
-     * @param password    User's password.
+     * @param password    User's candidate password.
      * @param role        User's selected role (Student, Coordinator, Admin).
      * @return User object if credentials and role match; null otherwise.
      * @throws SQLException If a database error occurs.
      */
     public User authenticateUser(String emailOrRoll, String password, String role) throws SQLException {
         String sql = "SELECT user_id, name, email, password, role FROM users " +
-                     "WHERE (email = ? OR CAST(user_id AS CHAR) = ?) AND password = ? AND LOWER(role) = LOWER(?)";
+                     "WHERE (email = ? OR CAST(user_id AS CHAR) = ?) AND LOWER(role) = LOWER(?)";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, emailOrRoll);
             stmt.setString(2, emailOrRoll);
-            stmt.setString(3, password);
-            stmt.setString(4, role);
+            stmt.setString(3, role);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return new User(
-                        rs.getInt("user_id"),
-                        rs.getString("name"),
-                        rs.getString("email"),
-                        rs.getString("password"),
-                        rs.getString("role")
-                    );
+                    String storedPassword = rs.getString("password");
+
+                    if (PasswordUtil.checkPassword(password, storedPassword)) {
+                        int userId = rs.getInt("user_id");
+
+                        // Transparently migrate plain-text password to BCrypt hash
+                        if (!PasswordUtil.isBCryptHash(storedPassword)) {
+                            updatePassword(userId, password);
+                        }
+
+                        return new User(
+                            userId,
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            storedPassword,
+                            rs.getString("role")
+                        );
+                    }
                 }
             }
         }
@@ -53,28 +66,33 @@ public class UserDAO {
     }
 
     /**
-     * Verifies if current password matches logged-in user's stored password.
+     * Verifies if candidate password matches logged-in user's stored password or BCrypt hash.
      */
     public boolean verifyPassword(int userId, String currentPassword) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM users WHERE user_id = ? AND password = ?";
+        String sql = "SELECT password FROM users WHERE user_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
-            stmt.setString(2, currentPassword);
             try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next() && rs.getInt(1) > 0;
+                if (rs.next()) {
+                    String storedPassword = rs.getString("password");
+                    return PasswordUtil.checkPassword(currentPassword, storedPassword);
+                }
             }
         }
+        return false;
     }
 
     /**
-     * Updates only the specified logged-in user's password using PreparedStatement.
+     * Updates the specified user's password using BCrypt hashing via PreparedStatement.
      */
     public boolean updatePassword(int userId, String newPassword) throws SQLException {
         String sql = "UPDATE users SET password = ? WHERE user_id = ?";
+        String hashedPassword = PasswordUtil.isBCryptHash(newPassword) ? newPassword : PasswordUtil.hashPassword(newPassword);
+
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, newPassword);
+            stmt.setString(1, hashedPassword);
             stmt.setInt(2, userId);
             return stmt.executeUpdate() > 0;
         }
@@ -156,11 +174,13 @@ public class UserDAO {
 
     public boolean createCoordinator(String name, String email, String password) throws SQLException {
         String sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'Coordinator')";
+        String hashedPassword = PasswordUtil.isBCryptHash(password) ? password : PasswordUtil.hashPassword(password);
+
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, name);
             stmt.setString(2, email);
-            stmt.setString(3, password);
+            stmt.setString(3, hashedPassword);
             return stmt.executeUpdate() > 0;
         }
     }
